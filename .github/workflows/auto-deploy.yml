@@ -1,0 +1,78 @@
+name: Auto Deploy to EAS
+
+# This workflow automatically:
+# 1. Publishes EAS Updates for JavaScript-only changes
+# 2. Requires manual builds for native changes (due to build time/cost)
+
+on:
+  push:
+    branches:
+      - claude/rtsp-vlckit-integration-*
+      - main
+      - master
+      - development
+
+jobs:
+  # Always publish JavaScript updates
+  eas-update:
+    name: Publish EAS Update
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: npm
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish update
+        run: eas update --auto --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  # Check if native files changed (for notification)
+  check-native-changes:
+    name: Check for Native Changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for native file changes
+        id: check
+        run: |
+          NATIVE_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E '(\.podspec|\.swift|\.kt|\.java|modules/.*/(ios|android)/|app\.json|eas\.json)' || true)
+          if [ -n "$NATIVE_FILES" ]; then
+            echo "Native files changed:"
+            echo "$NATIVE_FILES"
+            echo "::warning::Native files changed! EAS Update won't include these changes. Run 'eas build --profile development --platform ios' to rebuild."
+            echo "native_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Only JavaScript files changed - EAS Update is sufficient"
+            echo "native_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on commit (if native changed)
+        if: steps.check.outputs.native_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: '⚠️ **Native files changed!** EAS Update published JavaScript only.\n\nTo test native changes, run:\n```bash\neas build --profile development --platform ios\n```'
+            })
