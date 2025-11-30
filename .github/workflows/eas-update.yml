@@ -1,10 +1,21 @@
 name: EAS Update
 
+# WARNING: This workflow only publishes JavaScript/asset changes (OTA updates)
+# Native module changes (like VLCKit integration) require 'eas build' instead
+#
+# Current project uses native modules - this workflow is DISABLED by default
+# Only use this for JavaScript-only updates after distributing native builds
+#
+# To publish native builds, use the 'EAS Build' workflow or run manually:
+#   eas build --profile development --platform ios
+
 on:
   push:
     branches:
-      - main
-      - master
+      - disabled-until-production  # Changed from main/master to prevent auto-updates
+      # Uncomment below ONLY for JavaScript-only changes:
+      # - main
+      # - master
 
 jobs:
   update:
