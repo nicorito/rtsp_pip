@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "expo-template",
+    "slug": "expo-template",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.expotemplate"
+    },
+    "android": {
+      "package": "com.yourcompany.expotemplate"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/dbcd8e54-cbdf-424d-85a5-77223090cf91"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dbcd8e54-cbdf-424d-85a5-77223090cf91"
+      }
+    },
+    "owner": "erykdev"
+  }
+}
